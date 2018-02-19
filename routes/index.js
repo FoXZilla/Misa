@@ -1,9 +1,20 @@
-var express = require('express');
-var router = express.Router();
-
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
+"use strict";
+/// <reference path="../fixed.d.ts"/>
+Object.defineProperty(exports, "__esModule", { value: true });
+const lib_1 = require("../lib/lib");
+const other_1 = require("./other");
+const Bluebird = require('bluebird');
+const Fs = Bluebird.promisifyAll(require('fs'));
+const Toml2Json = require('toml').parse;
+const Path = require('path');
+const Router = require('express').Router;
+const router = Router();
+router.use('/oauth', require('./oauth'));
+router.use('/user', require('./user'));
+router.use('/comment', require('./comment'));
+router.use('/posts', require('./posts'));
+router.get('/category/all', lib_1.catchWith(other_1.getCategoryAll));
+router.get('/tag/all', lib_1.catchWith(other_1.getTagAll));
 module.exports = router;
+;
+;
