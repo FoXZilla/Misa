@@ -5,9 +5,9 @@ import {Assert} from '../lib/pea-script';
 import {
     Cookie,
     Get, Post, Errcode,
-} from "../types";
+} from "@foxzilla/fireblog";
 import * as Comment from '../model/comment';
-import * as Posts from '../model/posts';
+import * as Article from '../model/article';
 import {checkToken, tokenManager} from '../lib/runtime';
 import FormDictator from "../lib/form-dictator";
 
@@ -23,7 +23,7 @@ router.post(`/create`,checkToken,async function(req,res,next){
     var ip =req.ip;
     res.json(await Assert<Post.comment.create.asyncCall>(async function(){
         var checker =new FormDictator(body)
-            .pick(['posts_id','md_content','reply_to'])
+            .pick(['article_id','md_content','reply_to'])
         ;
         if(
             (await checker
@@ -32,7 +32,7 @@ router.post(`/create`,checkToken,async function(req,res,next){
             .hasFail()
         )return {
             errcode:Errcode.CommentNotFound,
-            errmsg :`Comment is not exist.`,
+            errmsg :`The comment that be replied is not exist.`,
         };if(
             (await checker
             .checkIfExist('reply_to',Comment.canBeReply)
@@ -43,21 +43,21 @@ router.post(`/create`,checkToken,async function(req,res,next){
             errmsg :`Comment can't be reply.`,
         };if(
             (await checker
-            .require('posts_id')
-            .check('posts_id',Posts.isExist)
+            .require('article_id')
+            .check('article_id',Article.isExist)
             .waitResult())
             .hasFail()
         )return {
-            errcode:Errcode.PostsNotFound,
-            errmsg :`Posts is not exist.`
+            errcode:Errcode.ArticleNotFound,
+            errmsg :`Article is not exist.`
         };if(
             (await checker
-            .check('posts_id',Comment.canBeReply)
+            .check('article_id',Article.canBeReply)
             .waitResult())
             .hasFail()
         )return {
             errcode:Errcode.AccessDeny,
-            errmsg :`This Posts disabled comment.`,
+            errmsg :`This Article disabled comment.`,
         };
         return {
             errcode:Errcode.Ok,
@@ -75,7 +75,7 @@ router.get(`/remove/:comment_id(\\d+)`,checkToken ,async function(req,res,next){
     var cookie:Cookie =req.cookies;
     res.json(await Assert<Get.comment.remove.asyncCall>(async function(commentId){
         if(
-            (await Comment.getById(commentId)).author
+            (await Comment.getInfoById(commentId)).author
             !==
             tokenManager().getTokenInfo(cookie.token!).userId
         )return{

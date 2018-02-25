@@ -1,5 +1,5 @@
 import {getRandomChar} from './pea-script';
-import {Errcode} from "../types";
+import {Errcode} from "@foxzilla/fireblog";
 
 interface TokenValue{
     oAuthId:string,
@@ -29,15 +29,14 @@ export default class TokenManager{
     };
     checkToken(token?:string)
         :Errcode.Ok
-        |Errcode.NeedLogin
-        |Errcode.LoginTimeout
-        |Errcode.Error
+        |Errcode.NeedToken
+        |Errcode.TokenTimeout
     {
-        if(!token)return Errcode.Error;
-        if(!(token in this.tokenMap))return Errcode.NeedLogin;
+        if(!token)return Errcode.NeedToken;
+        if(!(token in this.tokenMap))return Errcode.NeedToken;
         if(this.getTokenAge(token).getTime() < new Date().getTime()){
             this.destroyToken(token);
-            return Errcode.LoginTimeout;
+            return Errcode.TokenTimeout;
         };
         return Errcode.Ok;
     };

@@ -1,20 +1,11 @@
-import {CategoryInfo, Get, Errcode, TagInfo} from "../types";
+import {Get, Errcode} from "@foxzilla/fireblog";
 import {toIndexMap} from "../lib/lib";
-import {categoryPath, tagPath} from "../lib/config-reader";
-const Bluebird = require('bluebird');
-const Fs = Bluebird.promisifyAll(require('fs'));
-const Path = require('path');
-const Toml2Json =require('toml').parse;
+import * as Category from '../model/category';
+import * as Tag from '../model/tag';
 
 
 export var getCategoryAll:Get.category.all.asyncCall =async function(){
-    var files:string[] =await Fs.readdirAsync(await categoryPath());
-    var categories:CategoryInfo[] =[];
-    for(let fileName of files){
-        let filePath =Path.join(await categoryPath(),fileName);
-        let fileContent:string =await Fs.readFileAsync(filePath);
-        categories.push(Toml2Json(fileContent));
-    };
+    var categories =await Category.getInfoAll();
     return {
         errcode     :Errcode.Ok,
         errmsg      :'all categories.',
@@ -23,13 +14,7 @@ export var getCategoryAll:Get.category.all.asyncCall =async function(){
     };
 };
 export var getTagAll:Get.tag.all.asyncCall =async function (){
-    var files:string[] =await Fs.readdirAsync(await tagPath());
-    var tags:TagInfo[] =[];
-    for(let fileName of files){
-        let filePath =Path.join(await tagPath(),fileName);
-        let fileContent:string =await Fs.readFileAsync(filePath);
-        tags.push(Toml2Json(fileContent));
-    };
+    var tags =await Tag.getInfoAll();
     return {
         errcode :0,
         errmsg :'ok',

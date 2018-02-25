@@ -1,4 +1,4 @@
-var {clintUrl} =require("./lib/config-reader");
+var {frontUrl,attachmentPath} =require("./lib/config-reader");
 
 var express = require('express');
 var path = require('path');
@@ -11,7 +11,7 @@ var index = require('./routes/index');
 
 var app = express();
 app.use(async function(req, res, next) {
-  res.set('Access-Control-Allow-Origin', await clintUrl());
+  res.set('Access-Control-Allow-Origin', await frontUrl());
   res.set('Access-Control-Allow-Credentials', 'true');
   next();
 });
@@ -28,10 +28,10 @@ app.use(logger('dev'));
 // parse application/json
 app.use(bodyParser.json({type:'*/*'}));
 app.use(cookieParser());
-// app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use('/', index);
+app.use(express.static(attachmentPath()));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

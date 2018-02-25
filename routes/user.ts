@@ -1,35 +1,31 @@
 /// <reference path="../fixed.d.ts"/>
 
-import {RequestHandler,Response,Request} from "express";
+import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {
-    ApiResponse,
     Get, Post, Errcode,
-} from "../types";
+} from "@foxzilla/fireblog";
 import {defaultAvatar} from "../lib/config-reader";
 import * as User from '../model/user';
-import {catchWith, getBestMatchAvatar} from "../lib/lib";
-
+import {getBestMatchAvatar} from "../lib/lib";
+import {checkToken, tokenManager} from '../lib/runtime';
 const Router = require('express').Router;
 
 
-
 const router = Router();
-import {checkToken, tokenManager} from '../lib/runtime';
-
 
 
 router.get(`/info/:user_id(\\d+)`,async function(req,res,next){
     res.json(await Assert<Get.user.info.$user_id.asyncCall>(async function(user_id){
-        var info =await User.getById(user_id);
-        if(info ===null) return{
+        var info =await User.getInfoById(user_id);
+        if(!await User.isExist(user_id))return{
             errcode :Errcode.UserNotFound,
-            errmsg  :`Could not find user #${user_id}.`,
+            errmsg  :`Could not find this user.`,
         };
-        else return {
+        return {
             errcode :Errcode.Ok,
             errmsg  :'ok',
-            ...info,
+            ...await User.getInfoById(user_id),
         };
     })(req.params.user_id));
 } as RequestHandler);
@@ -54,21 +50,24 @@ router.post(`/update_info`,checkToken,async function(req,res,next){
     })());
 } as RequestHandler);
 router.get(`/avatar/:user_id(\\d+)`,async function(req,res,next){
-    var query:Get.user.avatar.$user_id.query =req.query;
-    var size =Number(query.size) ||40;
-    var info =await User.getRawById(req.params['user_id']);
-    if(info ===null) return res.sendFile(await defaultAvatar(size));
-    var options =info.avatar;
-    if(!options || Object.keys(options).length===0) return res.sendFile(await defaultAvatar(size));
+    var size =function(query:Get.user.avatar.$user_id.query):number{
+        return Number(query.size) ||40;
+    }(req.query);
+    var userId =req.params['user_id'];
+
+    if(!await User.isExist(userId)){
+        res.sendFile(await defaultAvatar(size));
+        return;
+    };
+
+    var options =(await User.getRawById(userId)).avatar;
+    if(!options || Object.keys(options).length===0){
+        res.sendFile(await defaultAvatar(size));
+        return;
+    };
+
     res.redirect(options[getBestMatchAvatar(options,size)!]);
 } as RequestHandler);
-
-
-
-
-
-
-
 
 
 

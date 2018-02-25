@@ -1,6 +1,6 @@
 import TokenManager from "./token-manager";
 import {tokenAgeMs} from "./config-reader";
-import {Cookie, Errcode} from "../types";
+import {Cookie, Errcode} from "@foxzilla/fireblog";
 import {RequestHandler} from "express";
 
 export const tokenManager=function(){
@@ -12,8 +12,8 @@ export var checkToken:RequestHandler =async function(req,res,next){
     var cookie:Cookie =req.cookies;
     if(!cookie.token){
         res.json({
-            errcode:Errcode.NeedLogin,
-            errmsg :'Token is undefined.'
+            errcode:Errcode.NeedToken,
+            errmsg :'Token is undefined, did you set withCredentials as true?'
         });
         return;
     };
@@ -29,3 +29,4 @@ export var checkToken:RequestHandler =async function(req,res,next){
     };
     next();
 };
+export var FireBlogVersion =require('../node_modules/@foxzilla/fireblog/package.json').version;

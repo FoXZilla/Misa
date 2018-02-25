@@ -1,5 +1,5 @@
 import {Response} from "express";
-import {ApiResponse} from "./types";
+import {ApiResponse} from "@foxzilla/fireblog";
 
 
 declare module "express" {
@@ -7,4 +7,3 @@ declare module "express" {
         json(json:ApiResponse):Response;
     }
 }
-

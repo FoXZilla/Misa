@@ -1,97 +1,72 @@
-import {Post, Errcode, UserInfo} from "../types/index";
-import {dataPath, serverUrl} from "../lib/config-reader";
+import {Post, Errcode, UserInfo, UserRaw} from "@foxzilla/fireblog";
+import {dataPath, apiUrl} from "../lib/config-reader";
 import FormDictator from "../lib/form-dictator";
+import {fileExist, Toml2Json ,Json2Toml} from "../lib/lib";
 
-const Bluebird = require('bluebird');
-const Toml2Json =require('toml').parse;
-const Json2Toml =require('json2toml');
-const Fs = Bluebird.promisifyAll(require('fs'));
+const Fs = require('fs-extra');
 const Path = require('path');
 
 const DATA_PATH =Path.join(dataPath(),'user/');
 
-export interface Raw{
-    id      :number,
-    origin  :string;
-    open_id :string;
-    nickname:string;
-    mail   ?:string;
-    avatar  :{
-        [p: number]:string,
-    };
-    create_date:string;
-};
-export interface Input{
-    origin  :string;
-    openId  :string;
-    nickname:string;
-    mail   ?:string;
-    avatar  :{
-        [p: number]:string,
-    },
-};
 
-export async function raw2UserInfo(obj:Raw):Promise<UserInfo>{
+// Transfer
+
+async function userRaw2UserInfo(raw:UserRaw):Promise<UserInfo>{
     return {
-        id      :obj.id,
-        origin  :obj.origin,
-        open_id :obj.open_id,
-        nickname:obj.nickname,
-        mail    :obj.mail,
-        avatar  :`${await serverUrl()}/user/avatar/${obj['id']}`,
-        create_date:obj['create_date'],
+        id      :raw.id,
+        nickname:raw.nickname,
+        avatar  :`${await apiUrl()}/user/avatar/${raw['id']}`,
+        create_date:raw['create_date'],
     };
 };
 
-export async function create(input:Input):Promise<UserInfo>{
-    var raw:Raw ={
-        id      :(await Fs.readdirAsync(DATA_PATH)).length+1,
-        origin  :input.origin,
-        open_id :input.openId,
-        nickname:input.nickname,
-        mail    :input.mail||'',//todo: https://github.com/KenanY/json2toml/issues/29
-        avatar  :input.avatar,
+
+// Getter
+
+export async function getRawById(id:number):Promise<UserRaw>{
+    return Toml2Json(await Fs.readFile(Path.join(DATA_PATH,`${id}.toml`)));
+};
+export async function getInfoById(id:number):Promise<UserInfo>{
+    return userRaw2UserInfo(await getRawById(id));
+};
+export async function getRawByOAuth(OAuthId:UserRaw['origin'],openId:UserRaw['open_id']):Promise<UserRaw|undefined>{
+    return (await Promise.all((await Fs.readdir(DATA_PATH))
+        .map(function(fileName:string){return Path.join(DATA_PATH,fileName)})
+        .map(function(filePath:string){return Fs.readFile(filePath)})))
+        .map(Toml2Json as (i:any)=>UserRaw)
+        .find(user=>user.origin===OAuthId&&user.open_id===openId)
+    ;
+};
+export async function getInfoByOAuth(OAuthId:UserRaw['origin'],openId:UserRaw['open_id']):Promise<UserInfo|undefined>{
+    var raw =await getRawByOAuth(OAuthId,openId);
+    if(!raw)return;
+    return userRaw2UserInfo(raw);
+};
+export async function isExist(id:number):Promise<boolean>{
+    return fileExist(Path.join(DATA_PATH,`${id}.toml`));
+};
+
+
+// Setter
+
+export async function create(input:Pick<UserRaw,'origin'|'open_id'|'nickname'|'mail'|'avatar'>):Promise<UserInfo>{
+    var raw:UserRaw ={
+        ...new FormDictator(input).pick(['origin','open_id','nickname','mail','avatar']).data,
+        id      :(await Fs.readdir(DATA_PATH)).length+1,
         create_date:new Date().toISOString(),
     };
 
-    await Fs.writeFileAsync(Path.join(DATA_PATH,`${raw.id}.toml`),Json2Toml(raw));
+    await Fs.writeFile(Path.join(DATA_PATH,`${raw.id}.toml`),Json2Toml(raw));
 
-    return raw2UserInfo(raw);
+    return userRaw2UserInfo(raw);
 };
-
-export async function getRawById(id:number):Promise<Raw|null>{
-    var filePath =Path.join(DATA_PATH,`${id}.toml`);
-    var isExist =await new Promise(resolve=>Fs.access(
-        filePath,
-        Fs.constants.R_OK,
-        (err:NodeJS.ErrnoException)=>err?resolve(false):resolve(true)
-    ));
-    if(!isExist)return null;
-    return Toml2Json(await Fs.readFileAsync(filePath));
-}
-export async function getById(id:number):Promise<UserInfo|null>{
-    var raw =await getRawById(id);
-    return raw ?raw2UserInfo(raw) :null;
-};
-export async function getByOAuth(oAuthId:string,openId:string):Promise<UserInfo|null>{
-    var fileNameList =await Fs.readdirAsync(DATA_PATH);
-    for(let fileName of fileNameList){
-        let filePath =Path.join(DATA_PATH,fileName);
-        let userData =Toml2Json(await Fs.readFileAsync(filePath));
-        if(userData.origin===oAuthId &&userData['open_id']===openId){
-            return await raw2UserInfo(userData);
-        };
-    };
-    return null;
-};
-export async function updateInfo(userId:number ,newInfo:Partial<Post.user.update_info.body>):Promise<
+export async function updateInfo(userId:number ,newInfo:Partial<Pick<UserRaw,'nickname'|'mail'>>):Promise<
     Partial<Post.user.update_info.body>
     | Errcode.Nickname
     | Errcode.Mail
 >{
-    var allowedKeys:(keyof Post.user.update_info.body)[] =['nickname','mail'];
     var checker =new FormDictator(newInfo)
-        .pick(allowedKeys)
+        .pick(['nickname','mail'])
         .noNull()
         .noUndefined()
         .changeIfExist('mail',String)
@@ -109,7 +84,7 @@ export async function updateInfo(userId:number ,newInfo:Partial<Post.user.update
     };
     var originInfo =await getRawById(userId);
 
-    await Fs.writeFileAsync(
+    await Fs.writeFile(
         Path.join(DATA_PATH,`${userId}.toml`),
         Json2Toml(Object.assign({},originInfo,checker.data)),
     );
