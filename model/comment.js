@@ -3,8 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const config_reader_1 = require("../lib/config-reader");
 const form_dictator_1 = require("../lib/form-dictator");
 const lib_1 = require("../lib/lib");
+const User = require("../model/user");
+const Article = require("../model/article");
+const runtime_1 = require("../lib/runtime");
+const pea_script_1 = require("../lib/pea-script");
 const Fs = require('fs-extra');
 const Path = require('path');
+const URL = require('url');
 const DATA_PATH = config_reader_1.commentPath();
 ;
 // Transfer
@@ -13,10 +18,13 @@ function raw2CommentRaw(raw) {
     return raw;
 }
 ;
-function commentRaw2CommentInfo(raw) {
-    return new form_dictator_1.default(raw).pick([
-        'id', 'date', 'article_id', 'author', 'md_content', 'reply_to',
-    ]).data;
+async function commentRaw2CommentInfo(raw) {
+    return new form_dictator_1.default({
+        ...new form_dictator_1.default(raw).pick([
+            'id', 'date', 'article_id', 'author', 'md_content', 'reply_to'
+        ]).data,
+        inform_list: raw.inform_list ? await Promise.all(raw.inform_list.map(User.getInfoById)) : undefined,
+    }).noUndefined().data;
 }
 ;
 // Getter
@@ -39,9 +47,9 @@ async function getRawAll() {
 }
 exports.getRawAll = getRawAll;
 async function getInfoAll() {
-    return (await getRawAll())
+    return await Promise.all((await getRawAll())
         .filter(raw => raw.deleted !== true)
-        .map(commentRaw2CommentInfo);
+        .map(commentRaw2CommentInfo));
 }
 exports.getInfoAll = getInfoAll;
 async function isExist(commentId) {
@@ -65,9 +73,22 @@ async function create(input) {
         author: input.author,
         md_content: input.md_content,
         reply_to: input.reply_to,
+        inform_list: input.inform_list,
     }).noUndefined().noNull().data; //todo: https://github.com/KenanY/json2toml/issues/29
+    var info = await commentRaw2CommentInfo(raw2CommentRaw(raw));
+    if (info.reply_to && (await getRawById(info.reply_to)).author !== info.author)
+        informReply(info).then(console.log, console.error);
+    if (info.inform_list && info.inform_list.length !== 0) {
+        if (info.reply_to) {
+            let index = info.inform_list.findIndex(i => i.id === info.reply_to);
+            if (index !== -1)
+                info.inform_list.splice(index, 1);
+        }
+        informUser(info).then(console.log, console.error);
+    }
+    ;
     await Fs.writeFile(Path.join(DATA_PATH, `${raw.id}.toml`), lib_1.Json2Toml(raw));
-    return commentRaw2CommentInfo(raw2CommentRaw(raw));
+    return info;
 }
 exports.create = create;
 ;
@@ -78,4 +99,80 @@ async function remove(commentId) {
     return commentRaw2CommentInfo(raw2CommentRaw(raw));
 }
 exports.remove = remove;
+;
+async function informReply(info) {
+    var beRepliedComment = await getRawById(info.reply_to);
+    var beRepliedUser = await User.getRawById(beRepliedComment.author);
+    if (!beRepliedUser.mail)
+        return 'User has not mail address.';
+    var commitUser = await User.getRawById(info.author);
+    var articleRaw = await Article.getRawById(info.article_id);
+    return runtime_1.sendMail({
+        to: beRepliedUser.mail,
+        title: `[#${articleRaw.id}/#${beRepliedComment.id}] Your comment receive a reply in article "${articleRaw.title}".`,
+        md_content: pea_script_1.o_0 `
+                ${commitUser.nickname}:
+                
+                ${info.md_content.split('\n').map(i => '> ' + i).join('\n')}
+                
+                &nbsp;
+                
+                ---
+                
+                - [view this reply](${config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+            _version: runtime_1.FireBlogVersion,
+            _type: "go_comment" /* goComment */,
+            ...new form_dictator_1.default(info).pick(['id', 'article_id', 'author', 'reply_to']).noUndefined().data,
+        }))})
+                - [view your comment](${config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+            _version: runtime_1.FireBlogVersion,
+            _type: "go_comment" /* goComment */,
+            ...new form_dictator_1.default(beRepliedComment).pick(['id', 'article_id', 'author', 'reply_to']).noUndefined().data,
+        }))})
+                - [view article](${config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+            _version: runtime_1.FireBlogVersion,
+            _type: "go_article" /* goArticle */,
+            ...new form_dictator_1.default(articleRaw).pick(['id', 'state']).data,
+        }))})
+                
+            `,
+    }).then(console.log, console.error);
+}
+exports.informReply = informReply;
+;
+async function informUser(info) {
+    var articleRaw = await Article.getRawById(info.article_id);
+    var commentUser = await User.getRawById(info.author);
+    return await Promise.all(info.inform_list.map(async function (userInfo) {
+        var userRaw = await User.getRawById(userInfo.id);
+        if (!userRaw.mail)
+            return `User ${userInfo.nickname} has not mail address.`;
+        return runtime_1.sendMail({
+            to: userRaw.mail,
+            title: `[#${articleRaw.id}/#${info.id}] ${commentUser.nickname} mentioned you in the comments in article "${articleRaw.title}".`,
+            md_content: pea_script_1.o_0 `
+                ${commentUser.nickname}:
+                
+                ${info.md_content.split('\n').map(i => '> ' + i).join('\n')}
+                
+                &nbsp;
+                
+                ---
+                
+                - [view this comment](${config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+                _version: runtime_1.FireBlogVersion,
+                _type: "go_comment" /* goComment */,
+                ...new form_dictator_1.default(info).pick(['id', 'article_id', 'author', 'reply_to']).noUndefined().data,
+            }))})
+                - [view article](${config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+                _version: runtime_1.FireBlogVersion,
+                _type: "go_article" /* goArticle */,
+                ...new form_dictator_1.default(articleRaw).pick(['id', 'state']).data,
+            }))})
+                
+            `,
+        }).then(console.log, console.error);
+    }));
+}
+exports.informUser = informUser;
 ;

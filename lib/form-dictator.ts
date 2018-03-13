@@ -8,13 +8,15 @@ interface CheckRecord<T>{
 export default class FormDictator<T>{
     public _results:CheckRecord<T>[] =[];
     constructor(public data:T){};
-    pick(keys:(keyof T)[]){
+    pick<K extends keyof T>(keys:K[]){
         var newData =Object.create(null);
         for(let key of keys){
+            //@ts-ignore
             if(!(key in this.data))continue;
+            //@ts-ignore
             newData[key] =this.data[key];
         }
-        return this.clone(newData);
+        return this.clone<Pick<T,K>>(newData);
     };
     noUndefined(){
         var newData =Object.create(null);
@@ -75,8 +77,9 @@ export default class FormDictator<T>{
         else this.check(...arguments);
         return this.clone();
     };
-    clone(data:any=this.data){
-        var fd =new FormDictator(data as T);
+    clone<U=T>(data:any=this.data){
+        var fd =new FormDictator<U>(data!);
+        //@ts-ignore
         fd._results =Array.from(this._results);
         return fd;
     };

@@ -6,6 +6,7 @@ const Comment = require("../model/comment");
 const Article = require("../model/article");
 const runtime_1 = require("../lib/runtime");
 const form_dictator_1 = require("../lib/form-dictator");
+const User = require("../model/user");
 const Router = require('express').Router;
 const router = Router();
 router.post(`/create`, runtime_1.checkToken, async function (req, res, next) {
@@ -14,7 +15,7 @@ router.post(`/create`, runtime_1.checkToken, async function (req, res, next) {
     var ip = req.ip;
     res.json(await pea_script_1.Assert(async function () {
         var checker = new form_dictator_1.default(body)
-            .pick(['article_id', 'md_content', 'reply_to']);
+            .pick(['article_id', 'md_content', 'reply_to', 'inform_list']);
         if ((await checker
             .checkIfExist('reply_to', Comment.isExist)
             .waitResult())
@@ -47,6 +48,16 @@ router.post(`/create`, runtime_1.checkToken, async function (req, res, next) {
             return {
                 errcode: 403 /* AccessDeny */,
                 errmsg: `This Article disabled comment.`,
+            };
+        if ((await checker
+            .checkIfExist('inform_list', async function (userList) {
+            return (await Promise.all(userList.map(User.isExist))).every(i => i);
+        })
+            .waitResult())
+            .hasFail())
+            return {
+                errcode: 205 /* UserNotFound */,
+                errmsg: `Unknown user in inform_list.`,
             };
         return {
             errcode: 0 /* Ok */,

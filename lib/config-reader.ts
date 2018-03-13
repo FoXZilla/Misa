@@ -23,29 +23,27 @@ export function tagPath():string{
 export function attachmentPath():string{
     return Path.join(dataPath(),'attachment/');
 };
-export async function config():Promise<any>{
-    return Toml2Json(
-        await Fs.readFile(
-            Path.join(await dataPath(),'config.toml')
-        )
-    );
-};
-export async function frontUrl():Promise<string>{
-    return (await config())['front_url'];
+export const config:{[p:string]:any} =Toml2Json(
+    Fs.readFileSync(
+        Path.join(dataPath(),'config.toml')
+    )
+);
+export function frontUrl():string{
+    return config['front_url'];
 };
 export async function apiUrl():Promise<string>{
-    return (await config())['api_url'];
+    return config['api_url'];
 };
 export async function tokenAgeMs():Promise<number>{
-    return ((await config())['token_age_s']||60*60*24*7)*1000;
+    return (config['token_age_s']||60*60*24*7)*1000;
 };
 export async function defaultAvatar(size:number):Promise<string>{
-    var options =(await config())['default_avatar'];
+    var options =config['default_avatar'];
     var bestMatch =getBestMatchAvatar(options,size)!;
     return Path.join(dataPath(),options[bestMatch]);
 };
 export async function getOAuthConfig(OAuthId:string){
-    var options:FireBlogData['oauth']|undefined =(await config())['oauth'];
+    var options:FireBlogData['oauth']|undefined =config['oauth'];
     if(!options)return null;
     if(!options[OAuthId])return null;
     return options[OAuthId];

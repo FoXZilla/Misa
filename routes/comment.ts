@@ -4,12 +4,13 @@ import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {
     Cookie,
-    Get, Post, Errcode,
+    Get, Post, Errcode, CommentRaw,
 } from "@foxzilla/fireblog";
 import * as Comment from '../model/comment';
 import * as Article from '../model/article';
 import {checkToken, tokenManager} from '../lib/runtime';
 import FormDictator from "../lib/form-dictator";
+import * as User from '../model/user';
 
 const Router = require('express').Router;
 
@@ -23,7 +24,7 @@ router.post(`/create`,checkToken,async function(req,res,next){
     var ip =req.ip;
     res.json(await Assert<Post.comment.create.asyncCall>(async function(){
         var checker =new FormDictator(body)
-            .pick(['article_id','md_content','reply_to'])
+            .pick(['article_id','md_content','reply_to','inform_list'])
         ;
         if(
             (await checker
@@ -58,6 +59,19 @@ router.post(`/create`,checkToken,async function(req,res,next){
         )return {
             errcode:Errcode.AccessDeny,
             errmsg :`This Article disabled comment.`,
+        };if(
+            (await checker
+                .checkIfExist(
+                    'inform_list',
+                    async function(userList:CommentRaw['inform_list']){
+                        return (await Promise.all(userList!.map(User.isExist))).every(i=>i)
+                    }
+                )
+                .waitResult())
+                .hasFail()
+        )return {
+            errcode:Errcode.UserNotFound,
+            errmsg :`Unknown user in inform_list.`,
         };
         return {
             errcode:Errcode.Ok,
