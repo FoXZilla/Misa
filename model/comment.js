@@ -59,7 +59,7 @@ exports.isExist = isExist;
 ;
 async function canBeReply(commentId) {
     var comment = await getRawById(commentId);
-    return comment.reply_to ? false : true;
+    return !comment.reply_to && !comment.deleted;
 }
 exports.canBeReply = canBeReply;
 ;

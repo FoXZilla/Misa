@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import {FireBlogData} from "@foxzilla/fireblog";
 import {Json2Toml} from "../lib/lib";
 
@@ -76,8 +78,8 @@ program
                 token_age_s:Data.token_age_s||60*60*24*7,
                 api_url    :Data.api_url,
                 default_avatar:Data.default_avatar||{//todo: fetch data to local
-                    40 :"./attachment/misa/default-avatar-40x40.gif",
-                    100:"./attachment/misa/default-avatar-100x100.gif",
+                    40 :"./attachment/_misa/default-avatar-40x40.gif",
+                    100:"./attachment/_misa/default-avatar-100x100.gif",
                 },
             }));
         };

@@ -124,7 +124,7 @@ export async function accessTo(
     articleId:ArticleInfo['id'],
     {password}:{password?:string}={}
 ):Promise<ApiResponse>{
-    if(!fileExist(DATA_PATH,`${articleId}.toml`))return {
+    if(!await fileExist(DATA_PATH,`${articleId}.toml`))return {
         errcode :Errcode.ArticleNotFound,
         errmsg  :'Could not found this article.',
     };

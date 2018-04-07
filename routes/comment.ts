@@ -41,7 +41,7 @@ router.post(`/create`,checkToken,async function(req,res,next){
             .hasFail()
         )return {
             errcode:Errcode.AccessDeny,
-            errmsg :`Comment can't be reply.`,
+            errmsg :`Comment can't be replied.`,
         };if(
             (await checker
             .require('article_id')

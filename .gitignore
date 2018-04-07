@@ -60,3 +60,12 @@ typings/
 # dotenv environment variables file
 .env
 
+# WebStorm
+.idea
+
+# test data
+*.fb.json
+*.wordpress.*.xml
+data/
+_data/
+__data/

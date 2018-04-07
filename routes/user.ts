@@ -56,12 +56,14 @@ router.get(`/avatar/:user_id(\\d+)`,async function(req,res,next){
     var userId =req.params['user_id'];
 
     if(!await User.isExist(userId)){
+        res.status(404);
         res.sendFile(await defaultAvatar(size));
         return;
     };
 
     var options =(await User.getRawById(userId)).avatar;
     if(!options || Object.keys(options).length===0){
+        res.status(404);
         res.sendFile(await defaultAvatar(size));
         return;
     };

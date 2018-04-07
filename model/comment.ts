@@ -70,7 +70,7 @@ export async function isExist(commentId:CommentInfo['id']):Promise<boolean>{
 };
 export async function canBeReply(commentId:CommentInfo['id']):Promise<boolean>{
     var comment =await getRawById(commentId);
-    return comment.reply_to ?false :true;
+    return !comment.reply_to && !comment.deleted;
 };
 
 

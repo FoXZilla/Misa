@@ -26,7 +26,7 @@
 Import FireBlogData:
 
 ```
-npm run import filename.fb.json
+npm run import out.fb.json
 ```
 
 There will import data to `/_data`, check it, and rename as `data` to enable that.

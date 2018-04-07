@@ -113,7 +113,7 @@ async function canBeReply(articleId) {
 exports.canBeReply = canBeReply;
 ;
 async function accessTo(articleId, { password } = {}) {
-    if (!lib_1.fileExist(DATA_PATH, `${articleId}.toml`))
+    if (!await lib_1.fileExist(DATA_PATH, `${articleId}.toml`))
         return {
             errcode: 201 /* ArticleNotFound */,
             errmsg: 'Could not found this article.',
