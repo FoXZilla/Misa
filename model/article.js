@@ -14,6 +14,8 @@ function raw2Info(raw) {
         ...new form_dictator_1.default(raw).pick([
             'id', 'title', 'description', 'cover', 'state', 'tag_list', 'category_list', 'update_time', 'create_time', 'view_count'
         ]).data,
+        require_password: Boolean(raw.meta && raw.meta.password),
+        no_comment: Boolean(raw.meta && raw.meta.no_comment),
         comment_count: 0,
     };
 }
@@ -31,6 +33,8 @@ async function articleRaw2ArticleInfo(raw) {
         ]).data,
         comment_count: 0,
         comment_list: [],
+        require_password: Boolean(raw.meta && raw.meta.password),
+        no_comment: Boolean(raw.meta && raw.meta.no_comment),
     };
 }
 ;
