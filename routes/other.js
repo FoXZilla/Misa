@@ -21,3 +21,11 @@ exports.getTagAll = async function () {
         tag_map: lib_1.toIndexMap(tags, 'alias'),
     };
 };
+exports.getFireBlogVersion = async function () {
+    var packageJson = require('../package.json');
+    return {
+        errcode: 0,
+        errmsg: 'ok',
+        version: packageJson.dependencies['@foxzilla/fireblog'],
+    };
+};

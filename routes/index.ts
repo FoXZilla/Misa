@@ -1,7 +1,7 @@
 /// <reference path="../fixed.d.ts"/>
 
 import {catchWith} from "../lib/lib";
-import {getCategoryAll, getTagAll} from "./other";
+import {getCategoryAll ,getFireBlogVersion ,getTagAll} from "./other";
 const Router = require('express').Router;
 
 
@@ -14,7 +14,7 @@ router.use('/comment'     ,require('./comment'));
 router.use('/article'     ,require('./article'));
 router.get('/category/all',catchWith(getCategoryAll));
 router.get('/tag/all'     ,catchWith(getTagAll));
+router.get('/fireblog/version' ,catchWith(getFireBlogVersion));
 
 
-
-module.exports =router;;;
+module.exports =router;

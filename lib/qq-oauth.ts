@@ -25,14 +25,14 @@ export default class QQOAuth{
         this.redirectUri =redirectUri;
         this.scope =scope;
     };
-    getCode(redirect:(url:string)=>void){
+    getCode(redirect:(url:string)=>void ,query={}){
         const URL =require('url');
         const GetCodeUrl ='https://graph.qq.com/oauth2.0/authorize';
         const State =Math.random().toString().split('.')[1];
         const GetCodeQueryData ={
             response_type :'code',
             client_id :this.clientId,
-            redirect_uri:this.redirectUri,
+            redirect_uri:`${this.redirectUri}?${new URL.URLSearchParams(query)}`,
             state :State,
             scope:this.scope.join(','),
         };

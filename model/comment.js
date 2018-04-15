@@ -79,7 +79,7 @@ async function create(input) {
     if (info.reply_to && (await getRawById(info.reply_to)).author !== info.author)
         informReply(info).then(console.log, console.error);
     if (info.inform_list && info.inform_list.length !== 0) {
-        if (info.reply_to) {
+        if (info.reply_to) { // It will not inform user when the user has bean informed on reply.
             let index = info.inform_list.findIndex(i => i.id === info.reply_to);
             if (index !== -1)
                 info.inform_list.splice(index, 1);

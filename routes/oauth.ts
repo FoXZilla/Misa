@@ -9,6 +9,7 @@ import {frontUrl, apiUrl, getOAuthConfig} from "../lib/config-reader";
 import * as User from '../model/user';
 import QQOAuth from "../lib/qq-oauth";
 import {checkToken, FireBlogVersion, tokenManager} from '../lib/runtime';
+import {CloseType} from "@foxzilla/fireblog/types/firebean";
 
 const URL = require('url');
 const Router = require('express').Router;
@@ -34,7 +35,7 @@ const router = Router();
     });
 
     router.get(`/login/${OAuthId}`,function(req,res,next){
-        qqOAuth.getCode(url=>res.redirect(url));
+        qqOAuth.getCode(url=>res.redirect(url),req.query);
     } as RequestHandler);
 
     router.get(`/callback/${OAuthId}`,async function(req,res,next){
@@ -61,7 +62,7 @@ const router = Router();
         });
         var redirectQuery:FireBean.SetStorageData ={
             _type   :FireBean.Type.setStorage,
-            _close  :'1',
+            _close  :CloseType.justClose,
             _version:FireBlogVersion,
             key     :Get.oauth.callback.$oauth_id.Storage.Key,
             value   :JSON.stringify(Assert<Get.oauth.callback.$oauth_id.StorageValue>({
@@ -69,6 +70,7 @@ const router = Router();
                 token   :token,
                 age     :tokenManager().getTokenAge(token).toISOString(),
             })),
+            ...(req.query.firebean ?JSON.parse(req.query.firebean) :{}),
         };
 
         Object.entries(Assert<Get.oauth.callback.$oauth_id.CookieValue>({
@@ -87,9 +89,9 @@ const router = Router();
         if(req.method==='HEAD') res.end();
         else res.redirect(`${await frontUrl()}/_firebean?${new URL.URLSearchParams(Assert<FireBean.RemoveStorageData>({
             _type   :FireBean.Type.removeStorage,
-            _close  :'1',
+            _close  :CloseType.justClose,
             _version:FireBlogVersion,
-            key     :Get.oauth.callback.$oauth_id.Storage.Key,
+             key    :Get.oauth.callback.$oauth_id.Storage.Key,
         }))}`);
     } as RequestHandler);
 

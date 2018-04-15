@@ -16,10 +16,14 @@ router.get(`/info/:user_id(\\d+)`, async function (req, res, next) {
                 errcode: 205 /* UserNotFound */,
                 errmsg: `Could not find this user.`,
             };
+        if (runtime_1.tokenManager().checkToken(req.cookies.token) === 0 /* Ok */) {
+            info.mail = (await User.getRawById(user_id)).mail;
+        }
+        ;
         return {
             errcode: 0 /* Ok */,
             errmsg: 'ok',
-            ...await User.getInfoById(user_id),
+            ...info,
         };
     })(req.params.user_id));
 });

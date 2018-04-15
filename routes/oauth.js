@@ -25,7 +25,7 @@ const router = Router();
         clientSecret: oauthConfig.client_secret,
     });
     router.get(`/login/${OAuthId}`, function (req, res, next) {
-        qqOAuth.getCode(url => res.redirect(url));
+        qqOAuth.getCode(url => res.redirect(url), req.query);
     });
     router.get(`/callback/${OAuthId}`, async function (req, res, next) {
         var tokenDate = await qqOAuth.getToken(req.query);
@@ -53,7 +53,7 @@ const router = Router();
         });
         var redirectQuery = {
             _type: "set_storage" /* setStorage */,
-            _close: '1',
+            _close: "1" /* justClose */,
             _version: runtime_1.FireBlogVersion,
             key: "fireblog.oauth.login" /* Key */,
             value: JSON.stringify(pea_script_1.Assert({
@@ -61,6 +61,7 @@ const router = Router();
                 token: token,
                 age: runtime_1.tokenManager().getTokenAge(token).toISOString(),
             })),
+            ...(req.query.firebean ? JSON.parse(req.query.firebean) : {}),
         };
         Object.entries(pea_script_1.Assert({
             token: token,
@@ -74,7 +75,7 @@ const router = Router();
         else
             res.redirect(`${await config_reader_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
                 _type: "remove_storage" /* removeStorage */,
-                _close: '1',
+                _close: "1" /* justClose */,
                 _version: runtime_1.FireBlogVersion,
                 key: "fireblog.oauth.login" /* Key */,
             }))}`);

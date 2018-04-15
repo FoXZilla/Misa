@@ -3,7 +3,7 @@
 import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {
-    Get, Post, Errcode,
+    Get ,Post ,Errcode ,UserInfo ,UserRaw ,
 } from "@foxzilla/fireblog";
 import {defaultAvatar} from "../lib/config-reader";
 import * as User from '../model/user';
@@ -17,15 +17,18 @@ const router = Router();
 
 router.get(`/info/:user_id(\\d+)`,async function(req,res,next){
     res.json(await Assert<Get.user.info.$user_id.asyncCall>(async function(user_id){
-        var info =await User.getInfoById(user_id);
+        var info :UserInfo &{mail?:UserRaw['mail']} =await User.getInfoById(user_id);
         if(!await User.isExist(user_id))return{
             errcode :Errcode.UserNotFound,
             errmsg  :`Could not find this user.`,
         };
+        if(tokenManager().checkToken(req.cookies.token) ===Errcode.Ok){
+            info.mail =(await User.getRawById(user_id)).mail;
+        };
         return {
             errcode :Errcode.Ok,
             errmsg  :'ok',
-            ...await User.getInfoById(user_id),
+            ...info,
         };
     })(req.params.user_id));
 } as RequestHandler);

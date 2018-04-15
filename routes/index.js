@@ -11,6 +11,5 @@ router.use('/comment', require('./comment'));
 router.use('/article', require('./article'));
 router.get('/category/all', lib_1.catchWith(other_1.getCategoryAll));
 router.get('/tag/all', lib_1.catchWith(other_1.getTagAll));
+router.get('/fireblog/version', lib_1.catchWith(other_1.getFireBlogVersion));
 module.exports = router;
-;
-;

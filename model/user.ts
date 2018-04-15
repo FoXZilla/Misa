@@ -61,7 +61,7 @@ export async function create(input:Pick<UserRaw,'origin'|'open_id'|'nickname'|'m
     return userRaw2UserInfo(raw);
 };
 export async function updateInfo(userId:number ,newInfo:Partial<Pick<UserRaw,'nickname'|'mail'>>):Promise<
-    Partial<Post.user.update_info.body>
+    Partial<Post.user.update_info.request>
     | Errcode.Nickname
     | Errcode.Mail
 >{

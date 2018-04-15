@@ -22,3 +22,11 @@ export var getTagAll:Get.tag.all.asyncCall =async function (){
         tag_map :toIndexMap(tags,'alias'),
     };
 };
+export var getFireBlogVersion:Get.fireblog.version.asyncCall =async function (){
+    var packageJson =require('../package.json');
+    return {
+        errcode :0,
+        errmsg :'ok',
+        version :packageJson.dependencies['@foxzilla/fireblog'],
+    };
+};

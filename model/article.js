@@ -71,6 +71,11 @@ async function getInfoById(articleId) {
         });
     }
     ;
+    info.comment_list.sort(function (comment1, comment2) {
+        var lastUpdate1 = Math.max(new Date(comment1.date).getTime(), ...comment1.comment_list.map(c => new Date(c.date).getTime()));
+        var lastUpdate2 = Math.max(new Date(comment2.date).getTime(), ...comment2.comment_list.map(c => new Date(c.date).getTime()));
+        return lastUpdate2 - lastUpdate1;
+    });
     info.comment_count = info.comment_list.length;
     return info;
 }
