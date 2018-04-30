@@ -1,4 +1,4 @@
-import {tagPath} from "../lib/config-reader";
+import {tagPath} from "../lib/path-reader";
 import {TagInfo, TagRaw} from "@foxzilla/fireblog";
 import {Toml2Json} from "../lib/lib";
 import * as Article from '../model/article';

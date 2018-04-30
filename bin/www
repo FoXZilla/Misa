@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('a-blog-interface-server-minimized:server');
 var http = require('http');
+var https = require('https');
+var runtime =require("../lib/runtime");
 
 /**
  * Get port from environment and store in Express.
@@ -16,15 +18,30 @@ var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);console.log('listening :'+port);
 
 /**
- * Create HTTP server.
+ * Create HTTP(s) server.
  */
 
-var server = http.createServer(app);
+var server =function(){
+    var httpServer =function(){
+      console.log('Created a http server.');
+      return http.createServer(app);
+    };
+    var httpsServer =function(){
+        var sslConfig = require('../lib/ssl');
+        console.log('Created a https server.');
+        return https.createServer({
+            key: sslConfig.key,
+            cert: sslConfig.cert
+        }, app);
+    };
+    if(process.env.SSL ==='false') return httpServer();
+    if(/http(?!s)/.test(runtime.apiUrl())) return httpServer();
+    return httpsServer();
+}();
 
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

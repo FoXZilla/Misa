@@ -1,20 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_reader_1 = require("../lib/config-reader");
+const path_reader_1 = require("../lib/path-reader");
+const runtime_1 = require("../lib/runtime");
 const form_dictator_1 = require("../lib/form-dictator");
 const lib_1 = require("../lib/lib");
 const Fs = require('fs-extra');
 const Path = require('path');
-const DATA_PATH = Path.join(config_reader_1.dataPath(), 'user/');
+const DATA_PATH = path_reader_1.userPath();
 // Transfer
-async function userRaw2UserInfo(raw) {
+function userRaw2UserInfo(raw) {
     return {
         id: raw.id,
         nickname: raw.nickname,
-        avatar: `${await config_reader_1.apiUrl()}/user/avatar/${raw['id']}`,
+        avatar: `${runtime_1.apiUrl()}/user/avatar/${raw['id']}`,
         create_date: raw['create_date'],
     };
 }
+exports.userRaw2UserInfo = userRaw2UserInfo;
 ;
 // Getter
 async function getRawById(id) {

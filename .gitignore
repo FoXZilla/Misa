@@ -65,7 +65,13 @@ typings/
 
 # test data
 *.fb.json
+*.fbd.json
 *.wordpress.*.xml
 data/
 _data/
 __data/
+
+# SSL config
+/lib/ssl/*
+!/lib/ssl/index.js
+!/lib/ssl/index.ts

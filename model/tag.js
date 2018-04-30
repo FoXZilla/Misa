@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_reader_1 = require("../lib/config-reader");
+const path_reader_1 = require("../lib/path-reader");
 const lib_1 = require("../lib/lib");
 const Article = require("../model/article");
 const Fs = require('fs-extra');
 const Path = require('path');
-const DATA_PATH = config_reader_1.tagPath();
+const DATA_PATH = path_reader_1.tagPath();
 // Getter
 async function getRawAll() {
     return (await (Promise.all((await Fs.readdir(DATA_PATH))

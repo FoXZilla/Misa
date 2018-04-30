@@ -1,5 +1,4 @@
 "use strict";
-/// <reference path="../fixed.d.ts"/>
 Object.defineProperty(exports, "__esModule", { value: true });
 const lib_1 = require("../lib/lib");
 const other_1 = require("./other");
@@ -11,5 +10,6 @@ router.use('/comment', require('./comment'));
 router.use('/article', require('./article'));
 router.get('/category/all', lib_1.catchWith(other_1.getCategoryAll));
 router.get('/tag/all', lib_1.catchWith(other_1.getTagAll));
+router.get('/blog/info', lib_1.catchWith(other_1.getBlogInfo));
 router.get('/fireblog/version', lib_1.catchWith(other_1.getFireBlogVersion));
 module.exports = router;

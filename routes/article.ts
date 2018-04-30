@@ -1,5 +1,3 @@
-/// <reference path="../fixed.d.ts"/>
-
 import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {

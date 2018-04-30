@@ -1,11 +1,9 @@
-/// <reference path="../fixed.d.ts"/>
-
 import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {
     Get ,Post ,Errcode ,UserInfo ,UserRaw ,
 } from "@foxzilla/fireblog";
-import {defaultAvatar} from "../lib/config-reader";
+import {defaultAvatar ,path2url} from "../lib/runtime";
 import * as User from '../model/user';
 import {getBestMatchAvatar} from "../lib/lib";
 import {checkToken, tokenManager} from '../lib/runtime';
@@ -71,7 +69,7 @@ router.get(`/avatar/:user_id(\\d+)`,async function(req,res,next){
         return;
     };
 
-    res.redirect(options[getBestMatchAvatar(options,size)!]);
+    res.redirect(path2url(options[getBestMatchAvatar(options,size)!]));
 } as RequestHandler);
 
 

@@ -1,5 +1,4 @@
 "use strict";
-/// <reference path="../fixed.d.ts"/>
 Object.defineProperty(exports, "__esModule", { value: true });
 const pea_script_1 = require("../lib/pea-script");
 const Article = require("../model/article");

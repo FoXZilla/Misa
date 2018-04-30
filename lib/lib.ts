@@ -19,12 +19,16 @@ export function getBestMatchAvatar(optionMap:any,expectSize=40):number|null{
     };
     return options.pop()||null;
 }
-export function fileExist(...path:string[]):Promise<boolean>{
-    return new Promise(resolve=>Fs.access(
-        Path.join(...path),
-        Fs.constants.R_OK,
-        (err:NodeJS.ErrnoException)=>err?resolve(false):resolve(true)
-    ));
+export function fileExist(...path:string[]):boolean{
+    try{
+        Fs.accessSync(
+            Path.join(...path),
+            Fs.constants.R_OK
+        );
+        return true;
+    }catch(e){
+        return false;
+    };
 }
 export async function getNextIdFromPath(...path:string[]):Promise<number>{
     var files:string[] =await Fs.readdir(Path.join(...path));
@@ -38,5 +42,9 @@ export function toIndexMap<T>(array:Iterable<T>,key:keyof T){
     };
     return map as {[p:string]:T};
 };
-export const Json2Toml =require('json2toml');
-export const Toml2Json =require('toml').parse;
+export function Json2Toml(json:any):string{
+    return require('tomlify-j0.4').toToml(json);
+}
+export function Toml2Json(stringOrBuffer:string|Buffer):any{
+    return require('toml-j0.4').parse(stringOrBuffer.toString());
+}

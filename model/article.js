@@ -1,19 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_reader_1 = require("../lib/config-reader");
+const path_reader_1 = require("../lib/path-reader");
 const form_dictator_1 = require("../lib/form-dictator");
 const lib_1 = require("../lib/lib");
 const Comment = require("../model/comment");
 const User = require("../model/user");
+const runtime_1 = require("../lib/runtime");
 const Fs = require('fs-extra');
 const Path = require('path');
-const DATA_PATH = config_reader_1.articlePath();
+const DATA_PATH = path_reader_1.articlePath();
 // Transfer
 function raw2Info(raw) {
     return {
         ...new form_dictator_1.default(raw).pick([
-            'id', 'title', 'description', 'cover', 'state', 'tag_list', 'category_list', 'update_time', 'create_time', 'view_count'
+            'id', 'title', 'description', 'state', 'tag_list', 'category_list', 'update_time', 'create_time', 'view_count'
         ]).data,
+        ...raw.cover ? { cover: runtime_1.path2url(raw.cover) } : {},
         require_password: Boolean(raw.meta && raw.meta.password),
         no_comment: Boolean(raw.meta && raw.meta.no_comment),
         comment_count: 0,
@@ -50,7 +52,7 @@ async function getInfoById(articleId) {
             id: info.id,
             date: info.date,
             md_content: info.md_content,
-            author_id: info.author,
+            author_id: info.author_id,
         };
     };
     var allCommentInfo = await Comment.getInfoAll();
@@ -61,12 +63,12 @@ async function getInfoById(articleId) {
             continue;
         info.comment_list.push({
             ...transferData(commentInfo),
-            author_nickname: (await User.getInfoById(commentInfo.author)).nickname,
+            author_nickname: (await User.getInfoById(commentInfo.author_id)).nickname,
             comment_list: await Promise.all(allCommentInfo
                 .filter(c => c.reply_to && c.reply_to === commentInfo.id)
                 .map(async (c) => ({
                 ...transferData(c),
-                author_nickname: (await User.getInfoById(c.author)).nickname,
+                author_nickname: (await User.getInfoById(c.author_id)).nickname,
             }))),
         });
     }

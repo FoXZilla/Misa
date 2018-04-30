@@ -1,9 +1,10 @@
-import {articlePath} from "../lib/config-reader";
+import {articlePath} from "../lib/path-reader";
 import FormDictator from "../lib/form-dictator";
 import {Omit, ArticleInfo, ArticleStatus, ArticleRaw, CommentInfo, Errcode, ApiResponse, NeedPasswordResponse} from "@foxzilla/fireblog";
 import {fileExist, Json2Toml, Toml2Json} from "../lib/lib";
 import * as Comment from '../model/comment';
 import * as User from '../model/user';
+import {path2url} from "../lib/runtime";
 
 const Fs = require('fs-extra');
 const Path = require('path');
@@ -23,10 +24,11 @@ function raw2Info(raw:Raw):Info{
     return {
         ...
         (new FormDictator(raw).pick([
-            'id','title','description','cover','state','tag_list','category_list','update_time','create_time','view_count'
+            'id','title','description','state','tag_list','category_list','update_time','create_time','view_count'
         ]).data as Pick<Raw,
-            'id'|'title'|'description'|'cover'|'state'|'tag_list'|'category_list'|'update_time'|'create_time'|'view_count'
+            'id'|'title'|'description'|'state'|'tag_list'|'category_list'|'update_time'|'create_time'|'view_count'
         >),
+        ...raw.cover ?{cover :path2url(raw.cover)} :{},
         require_password :Boolean(raw.meta &&raw.meta.password),
         no_comment :Boolean(raw.meta &&raw.meta.no_comment),
         comment_count:0,
@@ -66,7 +68,7 @@ export async function getInfoById(articleId:ArticleInfo['id']):Promise<ArticleIn
             id              :info.id,
             date            :info.date,
             md_content      :info.md_content,
-            author_id       :info.author,
+            author_id       :info.author_id,
         }
     };
     var allCommentInfo =await Comment.getInfoAll();
@@ -75,13 +77,13 @@ export async function getInfoById(articleId:ArticleInfo['id']):Promise<ArticleIn
         if(commentInfo.reply_to)continue;
         info.comment_list.push({
             ...transferData(commentInfo),
-            author_nickname :(await User.getInfoById(commentInfo.author)).nickname,
+            author_nickname :(await User.getInfoById(commentInfo.author_id)).nickname,
             comment_list    :await Promise.all(
                 allCommentInfo
                 .filter(c=>c.reply_to&&c.reply_to===commentInfo.id)
                 .map(async c=>({
                     ...transferData(c),
-                    author_nickname :(await User.getInfoById(c.author)).nickname,
+                    author_nickname :(await User.getInfoById(c.author_id)).nickname,
                 })))
             ,
         });

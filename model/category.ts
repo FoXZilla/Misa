@@ -1,4 +1,4 @@
-import {categoryPath} from "../lib/config-reader";
+import {categoryPath} from "../lib/path-reader";
 import {CategoryInfo, CategoryRaw} from "@foxzilla/fireblog";
 import {Toml2Json} from "../lib/lib";
 

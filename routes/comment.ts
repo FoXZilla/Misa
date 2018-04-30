@@ -1,9 +1,7 @@
-/// <reference path="../fixed.d.ts"/>
-
 import {RequestHandler} from "express";
 import {Assert} from '../lib/pea-script';
 import {
-    Cookie,
+    FireBlogCookie,
     Get, Post, Errcode, CommentRaw,
 } from "@foxzilla/fireblog";
 import * as Comment from '../model/comment';
@@ -19,12 +17,12 @@ const router = Router();
 
 
 router.post(`/create`,checkToken,async function(req,res,next){
-    var cookie:Cookie =req.cookies;
+    var cookie:FireBlogCookie =req.cookies;
     var body:Post.comment.create.request =req.body;
     var ip =req.ip;
     res.json(await Assert<Post.comment.create.asyncCall>(async function(){
         var checker =new FormDictator(body)
-            .pick(['article_id','md_content','reply_to','inform_list'])
+            .pick(['article_id','md_content','reply_to'])
         ;
         if(
             (await checker
@@ -59,26 +57,13 @@ router.post(`/create`,checkToken,async function(req,res,next){
         )return {
             errcode:Errcode.AccessDeny,
             errmsg :`This Article disabled comment.`,
-        };if(
-            (await checker
-                .checkIfExist(
-                    'inform_list',
-                    async function(userList:CommentRaw['inform_list']){
-                        return (await Promise.all(userList!.map(User.isExist))).every(i=>i)
-                    }
-                )
-                .waitResult())
-                .hasFail()
-        )return {
-            errcode:Errcode.UserNotFound,
-            errmsg :`Unknown user in inform_list.`,
         };
         return {
             errcode:Errcode.Ok,
             errmsg :'ok',
             ...(await Comment.create({
                 ip,
-                author:tokenManager().getTokenInfo(cookie.token!).userId,
+                author_id:tokenManager().getTokenInfo(cookie.token!).userId,
                 ...checker.data,
             })),
         };
@@ -86,10 +71,10 @@ router.post(`/create`,checkToken,async function(req,res,next){
 } as RequestHandler);
 
 router.get(`/remove/:comment_id(\\d+)`,checkToken ,async function(req,res,next){
-    var cookie:Cookie =req.cookies;
+    var cookie:FireBlogCookie =req.cookies;
     res.json(await Assert<Get.comment.remove.asyncCall>(async function(commentId){
         if(
-            (await Comment.getInfoById(commentId)).author
+            (await Comment.getInfoById(commentId)).author_id
             !==
             tokenManager().getTokenInfo(cookie.token!).userId
         )return{

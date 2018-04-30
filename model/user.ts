@@ -1,21 +1,22 @@
 import {Post, Errcode, UserInfo, UserRaw} from "@foxzilla/fireblog";
-import {dataPath, apiUrl} from "../lib/config-reader";
+import {dataPath ,userPath} from "../lib/path-reader";
+import {apiUrl} from "../lib/runtime";
 import FormDictator from "../lib/form-dictator";
 import {fileExist, Toml2Json ,Json2Toml} from "../lib/lib";
 
 const Fs = require('fs-extra');
 const Path = require('path');
 
-const DATA_PATH =Path.join(dataPath(),'user/');
+const DATA_PATH =userPath();
 
 
 // Transfer
 
-async function userRaw2UserInfo(raw:UserRaw):Promise<UserInfo>{
+export function userRaw2UserInfo(raw:UserRaw):UserInfo{
     return {
         id      :raw.id,
         nickname:raw.nickname,
-        avatar  :`${await apiUrl()}/user/avatar/${raw['id']}`,
+        avatar  :`${apiUrl()}/user/avatar/${raw['id']}`,
         create_date:raw['create_date'],
     };
 };

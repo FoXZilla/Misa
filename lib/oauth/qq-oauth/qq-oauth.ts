@@ -10,11 +10,11 @@ export default class QQOAuth{
     public redirectUri:string;
     public scope:string[];
     constructor({
-                    clientId,
-                    clientSecret,
-                    redirectUri,
-                    scope =['get_user_info'],
-                }:{
+        clientId,
+        clientSecret,
+        redirectUri,
+        scope =['get_user_info'],
+    }:{
         clientId:string,
         clientSecret:string,
         redirectUri:string,
