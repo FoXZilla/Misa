@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lib_1 = require("../lib/lib");
 const path_reader_1 = require("../lib/path-reader");
 const pea_script_1 = require("../lib/pea-script");
-const runtime_1 = require("../lib/runtime");
 var program = require('commander');
 var Path = require('path');
 var Fs = require('fs-extra');
@@ -76,7 +75,7 @@ program
             ...(await Fs.readdir(path_reader_1.articlePath())).map((s) => Path.join(path_reader_1.articlePath(), s)),
             ...(await Fs.readdir(path_reader_1.commentPath())).map((s) => Path.join(path_reader_1.commentPath(), s)),
             ...(await Fs.readdir(path_reader_1.userPath())).map((s) => Path.join(path_reader_1.userPath(), s)),
-        ]);
+        ], dataConfig.meta.api_url);
     }
     ;
     if (!lib_1.fileExist(Path.join(path_reader_1.staticPath(), '/favicon.ico')))
@@ -146,18 +145,18 @@ function downloadAttachment(attachments) {
             failUrlList.push(url);
             doDownload(resolve);
         });
-        console.log(`Downloading: ${url} - ${process.env.http_proxy}`);
+        console.log(`Downloading: ${url}`);
     };
     return new Promise(resolve => {
         while (threadNumber--)
             Promise.resolve().then(() => doDownload(resolve));
     });
 }
-function fixImages(mapPath, filePathList) {
+function fixImages(mapPath, filePathList, basePath) {
     console.log('fix path of images...');
     for (let filePath of filePathList)
         for (let [oldUrl, newUrl] of Object.entries(require(mapPath)))
-            Fs.writeFileSync(filePath, Fs.readFileSync(filePath).toString().replace(new RegExp(oldUrl, 'g'), Path.join(path_reader_1.dataPath(), newUrl).replace(path_reader_1.staticPath(), runtime_1.apiUrl() + '/')));
+            Fs.writeFileSync(filePath, Fs.readFileSync(filePath).toString().replace(new RegExp(oldUrl, 'g'), Path.join(path_reader_1.dataPath(), newUrl).replace(path_reader_1.staticPath(), basePath + '/')));
     ;
     ;
     console.log('fixed.');

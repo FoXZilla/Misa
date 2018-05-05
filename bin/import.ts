@@ -12,8 +12,6 @@ import {
     userPath
 } from "../lib/path-reader";
 import {getRandomChar} from "../lib/pea-script";
-import {apiUrl} from "../lib/runtime";
-
 
 var program = require('commander');
 var Path = require('path');
@@ -101,6 +99,7 @@ program
                     ...(await Fs.readdir(commentPath())).map((s:string)=>Path.join(commentPath(),s)),
                     ...(await Fs.readdir(userPath())).map((s:string)=>Path.join(userPath(),s)),
                 ],
+                dataConfig.meta.api_url,
             );
         };
 
@@ -197,7 +196,7 @@ function downloadAttachment(attachments :string[]):Promise<string>{
             failUrlList.push(url!);
             doDownload(resolve);
         });
-        console.log(`Downloading: ${url} - ${process.env.http_proxy}`);
+        console.log(`Downloading: ${url}`);
     };
     return new Promise(resolve=>{
         while(threadNumber--)
@@ -205,14 +204,14 @@ function downloadAttachment(attachments :string[]):Promise<string>{
     });
 }
 
-function fixImages(mapPath:string ,filePathList:string[]){
+function fixImages(mapPath:string ,filePathList:string[] ,basePath:string){
     console.log('fix path of images...');
 
     for(let filePath of filePathList)
         for(let [oldUrl,newUrl] of Object.entries(require(mapPath)))
             Fs.writeFileSync(filePath,Fs.readFileSync(filePath).toString().replace(
                 new RegExp(oldUrl,'g'),
-                Path.join(dataPath(),newUrl).replace(staticPath(),apiUrl()+'/'),
+                Path.join(dataPath(),newUrl).replace(staticPath(),basePath+'/'),
             ));
         ;
     ;
