@@ -1,102 +1,95 @@
-export interface QQOAuthTokenData{
-    accessToken:string;
-    age:Date;
-    refreshToken:string;
-};
+import Fetch from "node-fetch";
+import {FireBean ,OAuthOption} from "@foxzilla/fireblog";
+import {apiUrl} from "../../runtime";
+
+const URL =require('url');
+
+
 export default class QQOAuth{
-    public states:string[]=[];
-    public clientId:string;
-    public clientSecret:string;
-    public redirectUri:string;
-    public scope:string[];
-    constructor({
-        clientId,
-        clientSecret,
-        redirectUri,
-        scope =['get_user_info'],
-    }:{
-        clientId:string,
-        clientSecret:string,
-        redirectUri:string,
-        scope?:string[],
-    }){
-        this.clientId =clientId;
-        this.clientSecret =clientSecret;
-        this.redirectUri =redirectUri;
-        this.scope =scope;
+    public stateMap:{
+        [state:string]:{firebean:Partial<FireBean.Data>}
+    }={};
+    constructor(public config:OAuthOption){
+        config.redirect_uri =config.redirect_uri||`${apiUrl()}/oauth/callback/${config.id}`;
     };
-    getCode(redirect:(url:string)=>void ,query={}){
-        const URL =require('url');
-        const GetCodeUrl ='https://graph.qq.com/oauth2.0/authorize';
-        const State =Math.random().toString().split('.')[1];
-        const GetCodeQueryData ={
+
+    getCode(redirect:(url:string)=>void ,query:any={}){
+        const getCodeUrl ='https://graph.qq.com/oauth2.0/authorize';
+        const state =Math.random().toString().split('.')[1];
+        const queryData ={
             response_type :'code',
-            client_id :this.clientId,
-            redirect_uri:`${this.redirectUri}?${new URL.URLSearchParams(query)}`,
-            state :State,
-            scope:this.scope.join(','),
+            client_id :this.config.client_id,
+            redirect_uri :this.config.redirect_uri,
+            state :state,
+            scope:'get_user_info',
         };
-        this.states.push(State);
-        redirect(`${GetCodeUrl}?${(new URL.URLSearchParams(GetCodeQueryData))}`);
+        this.stateMap[state] ={
+            firebean :query.firebean
+                ?JSON.parse(query.firebean)
+                :{}
+            ,
+        };
+        redirect(`${getCodeUrl}?${(new URL.URLSearchParams(queryData))}`);
     };
-    async getToken(query:any):Promise<QQOAuthTokenData>{
-        if(!(this.states.includes(query.state))){
+    async getToken(query:any):Promise<string>{
+        if(!(query.state in this.stateMap)){
             throw new Error('The state not match.');
         };
-        this.states.splice(this.states.indexOf(query.state),1);
 
-        const URL =require('url');
-        const Axios =require('axios');
-        const GetTokenUrl ='https://graph.qq.com/oauth2.0/token';
-        const GetTokenQueryData ={
+        const url ='https://graph.qq.com/oauth2.0/token';
+        const queryData ={
+            client_id :this.config.client_id,
+            client_secret:this.config.client_secret,
+            code :query.code,
+            redirect_uri :this.config.redirect_uri,
             grant_type :'authorization_code',
-            client_id :this.clientId,
-            client_secret:this.clientSecret,
-            code:query.code,
-            redirect_uri:this.redirectUri,
         };
-        var getTokenUrl =`${GetTokenUrl}?${new URL.URLSearchParams(GetTokenQueryData)}`;
-        var tokenResponse =await Axios.get(getTokenUrl);
-        var tokenData =function(data){
+
+        var tokenData =await async function(response){
             var result:any ={};
-            for(let [key,value] of new URL.URLSearchParams(data).entries()){
+            for(let [key,value] of new URL.URLSearchParams(await response.text()).entries()){
                 result[key] =value;
             };
             return result
-        }(tokenResponse.data);
-        return {
-            age :new Date(+tokenData['expires_in']+new Date().getTime()),
-            accessToken :tokenData['access_token'],
-            refreshToken:tokenData['refresh_token'],
-        };
+        }(await Fetch(
+            `${url}?${new URL.URLSearchParams(queryData)}`,
+            {agent :global.HTTP_PROXY},
+        ));
+
+        return tokenData['access_token'];
+
     };
-    async getOpenId(tokenDate:QQOAuthTokenData):Promise<string>{
-        const URL =require('url');
-        const Axios =require('axios');
-        const GetOpenIdUrl ='https://graph.qq.com/oauth2.0/me';
-        const GetOpenIdQueryData ={
-            access_token:tokenDate.accessToken,
+    async getOpenId(accessToken:string):Promise<string>{
+        const url ='https://graph.qq.com/oauth2.0/me';
+        const queryData ={
+            access_token :accessToken,
         };
-        var openIdResponse =await Axios.get(`${GetOpenIdUrl}?${new URL.URLSearchParams(GetOpenIdQueryData)}`);
-        return JSON.parse(openIdResponse.data.match(/callback\((.+)\)/)[1]).openid;
+
+        var responseText =await (await Fetch(
+            `${url}?${new URL.URLSearchParams(queryData)}`,
+            {agent :global.HTTP_PROXY},
+        )).text();
+
+        return JSON.parse(responseText.match(/callback\((.+)\)/)![1]).openid;
     };
-    async getUserInfo(tokenDate:QQOAuthTokenData,openId:string){
-        const URL =require('url');
-        const Axios =require('axios');
-        const GetUserInfoUrl ='https://graph.qq.com/user/get_user_info';
-        const GetUserInfoQueryData ={
+    async getUserInfo(accessToken:string,openId:string){
+        const url ='https://graph.qq.com/user/get_user_info';
+        const queryData ={
             openid :openId,
-            access_token :tokenDate.accessToken,
-            oauth_consumer_key :this.clientId
+            access_token :accessToken,
+            oauth_consumer_key :this.config.client_id
         };
-        var response =await Axios.get(`${GetUserInfoUrl}?${new URL.URLSearchParams(GetUserInfoQueryData)}`);
+
+        var responseJson:any =await (await Fetch(
+            `${url}?${new URL.URLSearchParams(queryData)}`,
+            {agent :global.HTTP_PROXY},
+        )).json();
+
         return {
-            nickname :response.data.nickname as string,
+            nickname :responseJson.nickname as string,
             avatar   :{
-                30 :response.data.figureurl as string,
-                40 :response.data.figureurl_qq_1 as string,
-                50 :response.data.figureurl_1 as string,
-                100:response.data.figureurl_2 as string,
+                50 :responseJson.figureurl_1 as string,
+                100:responseJson.figureurl_2 as string,
             },
         };
     };

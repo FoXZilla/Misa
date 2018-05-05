@@ -30,15 +30,13 @@ export default {
         } as RequestHandler);
 
         router.get(`/callback/${config.id}`,async function(req,res,next){
-            const Query:CallbackInQuery =req.query;
+            var accessToken =await OAuth.getToken(req.query);
 
-            var accessToken =await OAuth.getToken(Query);
-
-            var oauthUserInfo =await OAuth.userInfo(accessToken);
+            var oauthUserInfo =await OAuth.getUserInfo(accessToken);
 
             var userInfo:UserInfo =
                 await User.getInfoByOAuth(config.id ,oauthUserInfo.id)
-                ||await User.create({
+                || await User.create({
                     origin :config.id,
                     open_id:oauthUserInfo.id,
                     mail   :oauthUserInfo.email,
@@ -56,12 +54,11 @@ export default {
                 openId :oauthUserInfo.id,
             });
 
-            Object.entries(Assert<Get.oauth.callback.$oauth_id.CookieValue>({
-                token   :token,
-            })).forEach(([key,value])=>res.cookie(
-                key,value,
-                {maxAge:tokenManager.getTokenAge(token).getTime()-new Date().getTime()},
-            ));
+            res.cookie(
+                'token',
+                token,
+                {maxAge:tokenManager.getTokenAge(token).getTime()-new Date().getTime()}
+            );
 
             res.redirect(stringify(
                 Object.assign(
@@ -78,6 +75,8 @@ export default {
                 ),
                 frontUrl()),
             );
+
+            delete OAuth.stateMap[req.query.state];
 
         } as RequestHandler);
 

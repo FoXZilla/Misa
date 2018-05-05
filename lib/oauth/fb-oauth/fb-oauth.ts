@@ -30,10 +30,10 @@ export class FbOauth{
         const getCodeUrl ='https://www.facebook.com/v2.12/dialog/oauth';
         const state =getRandomChar(16);
         const queryData:RedirectQuery ={
+            response_type :'code',
             client_id :this.config.client_id,
             redirect_uri :this.config.redirect_uri,
             state :state,
-            response_type :'code',
         };
         this.stateMap[state] ={
             firebean :query.firebean
@@ -51,36 +51,28 @@ export class FbOauth{
         const getTokenUrl ='https://graph.facebook.com/v2.12/oauth/access_token';
         const getTokenQueryData ={
             client_id :this.config.client_id,
-            client_secret:this.config.client_secret,
-            code:query.code,
-            redirect_uri:this.config.redirect_uri,
+            client_secret :this.config.client_secret,
+            code :query.code,
+            redirect_uri :this.config.redirect_uri,
         };
 
-
-        var tokenData =await async function(response){
-            var result:any ={};
-            for(let [key,value] of new URL.URLSearchParams(await response.json()).entries()){
-                result[key] =value;
-            };
-            return result
-        }(await Fetch(
+        var tokenData:any =await (await Fetch(
             `${getTokenUrl}?${new URL.URLSearchParams(getTokenQueryData)}`,
             {agent :global.HTTP_PROXY},
-        ));
+        )).json();
 
         return tokenData['access_token'];
 
     };
-    async userInfo(successToken:string):Promise<{id:string,name:string,email?:string}>{
-        const URL =require('url');
-        const GetTokenUrl ='https://graph.facebook.com/v2.12/me';
-        const GetTokenQueryData ={
+    async getUserInfo(successToken:string):Promise<{id:string,name:string,email?:string}>{
+        const url ='https://graph.facebook.com/v2.12/me';
+        const queryData ={
             access_token :successToken,
             fields :['id','name','email'].join(','),
         };
 
         var response =(await Fetch(
-            `${GetTokenUrl}?${new URL.URLSearchParams(GetTokenQueryData)}`,
+            `${url}?${new URL.URLSearchParams(queryData)}`,
             {agent :global.HTTP_PROXY},
         ));
 
