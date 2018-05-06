@@ -39,3 +39,7 @@ Run server:
 npm run dev   # debug
 npm run start # production
 ```
+
+# Options
+
+- disable https: `SSL=false npm start`

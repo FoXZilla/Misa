@@ -3,8 +3,8 @@
   "version": "0.0.1-alpha.1",
   "scripts": {
     "import": "node ./bin/import.js",
-    "dev": "cross-env DEBUG=Misa:*  PORT=3000 node ./bin/www",
-    "start": "cross-env PORT=80 node ./bin/www"
+    "dev": "cross-env NODE_ENV=development DEBUG=Misa:* PORT=3002 node ./bin/www",
+    "start": "cross-env NODE_ENV=production node ./bin/www"
   },
   "dependencies": {
     "@foxzilla/fireblog": "0.0.1-alpha.26",

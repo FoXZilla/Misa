@@ -35,7 +35,10 @@ var app=express();
 
 console.log('Set CORS for',frontUrl());
 app.use(async function(req,res,next){
-    res.set('Access-Control-Allow-Origin',frontUrl());
+    if(/^https?:\/\/(localhost|127\.0\.0\.1)/.test(req.headers.origin))
+        res.set('Access-Control-Allow-Origin',req.headers.origin);
+    else
+        res.set('Access-Control-Allow-Origin',frontUrl());
     res.set('Access-Control-Allow-Credentials','true');
     next();
 });
