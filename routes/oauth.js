@@ -4,6 +4,7 @@ const pea_script_1 = require("../lib/pea-script");
 const runtime_1 = require("../lib/runtime");
 const runtime_2 = require("../lib/runtime");
 const oauth_1 = require("../lib/oauth");
+const firebean_1 = require("../lib/firebean");
 const URL = require('url');
 const Router = require('express').Router;
 const router = Router();
@@ -29,12 +30,17 @@ router.all(`/logout`, async function (req, res, next) {
     if (req.method === 'HEAD')
         res.end();
     else
-        res.redirect(`${await runtime_1.frontUrl()}/_firebean?${new URL.URLSearchParams(pea_script_1.Assert({
+        res.redirect(firebean_1.stringify({
             _type: "remove_storage" /* removeStorage */,
-            _close: "1" /* justClose */,
-            _version: runtime_2.FireBlogVersion,
             key: "fireblog.oauth.login" /* Key */,
-        }))}`);
+        }, function (stateData) {
+            if ('referer' in req.headers) {
+                let url = URL.parse(req.headers.referer);
+                return `${url.protocol}//${url.host}`;
+            }
+            else
+                return runtime_1.frontUrl();
+        }()));
 });
 router.get(`/ping`, runtime_2.checkToken, async function (req, res, next) {
     var cookie = req.cookies;

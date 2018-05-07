@@ -8,6 +8,7 @@ import * as User from '../model/user';
 import {checkToken, FireBlogVersion, tokenManager} from '../lib/runtime';
 import {CloseType} from "@foxzilla/fireblog/types/firebean";
 import Strategies from '../lib/oauth';
+import {stringify} from "../lib/firebean";
 
 const URL = require('url');
 const Router = require('express').Router;
@@ -42,12 +43,18 @@ for(let [oauthId,config] of Object.entries(OAuthMap)){
 router.all(`/logout`,async function(req,res,next){
     Assert<(keyof Get.oauth.callback.$oauth_id.CookieValue)[]>(['token']).forEach(key=>res.cookie(key,null));
     if(req.method==='HEAD') res.end();
-    else res.redirect(`${await frontUrl()}/_firebean?${new URL.URLSearchParams(Assert<FireBean.RemoveStorageData>({
-        _type   :FireBean.Type.removeStorage,
-        _close  :CloseType.justClose,
-        _version:FireBlogVersion,
-         key    :Get.oauth.callback.$oauth_id.Storage.Key,
-    }))}`);
+    else res.redirect(stringify(
+        {
+            _type   :FireBean.Type.removeStorage,
+            key    :Get.oauth.callback.$oauth_id.Storage.Key,
+        },
+        function(stateData){
+            if('referer' in req.headers){
+                let url =URL.parse(req.headers.referer as string);
+                return `${url.protocol}//${url.host}`
+            }else return frontUrl();
+        }()
+    ));
 } as RequestHandler);
 
 router.get(`/ping`,checkToken,async function(req,res,next){
