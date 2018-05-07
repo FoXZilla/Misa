@@ -27,7 +27,7 @@ export default {
         var OAuth =new QQOAuth(config);
 
         router.get(`/login/${config.id}`,function(req,res,next){
-            OAuth.getCode(url=>res.redirect(url),req.query);
+            OAuth.getCode(url=>res.redirect(url),req);
         } as RequestHandler);
 
         router.get(`/callback/${config.id}`,async function(req,res,next){
@@ -69,8 +69,13 @@ export default {
                     },
                     <never>OAuth.stateMap[req.query.state].firebean,
                 ),
-                frontUrl()),
-            );
+                function(stateData){
+                    if('referer' in stateData){
+                        let url =URL.parse(stateData.referer);
+                        return `${url.protocol}//${url.host}`
+                    }else return frontUrl();
+                }(OAuth.stateMap[req.query.state]),
+            ));
 
         } as RequestHandler);
 

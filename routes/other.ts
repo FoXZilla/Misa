@@ -5,7 +5,7 @@ import * as Tag from '../model/tag';
 import {dataPath} from "../lib/path-reader";
 import FormDictator from "../lib/form-dictator";
 import FireBlogData ,{default as OAuthOption} from "@foxzilla/fireblog/types/export";
-import {path2url ,pathMap2urlMap} from "../lib/runtime";
+import {apiUrl ,frontUrl ,path2url ,pathMap2urlMap} from "../lib/runtime";
 
 const Fs = require('fs-extra');
 const Path = require('path');
@@ -45,8 +45,6 @@ export var getBlogInfo:Get.blog.info.asyncCall =async function (){
         name    :raw.name,
         version :raw.version,
         ...new FormDictator(raw.meta).pick([
-            'api_url',
-            'front_url',
             'publish_date',
             'description',
             'language',
@@ -70,5 +68,7 @@ export var getBlogInfo:Get.blog.info.asyncCall =async function (){
             ...raw.meta.author,
             ...raw.meta.author.avatar ?{avatar:path2url(raw.meta.author.avatar)} :{},
         },
+        api_url :apiUrl(),
+        front_url :frontUrl(),
     };
 };

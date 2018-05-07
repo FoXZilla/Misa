@@ -2,6 +2,7 @@ import {OAuthOption,FireBean} from "@foxzilla/fireblog";
 import {getRandomChar} from "../../pea-script";
 import {apiUrl} from "../../runtime";
 import Fetch from 'node-fetch';
+import {Request} from "express-serve-static-core";
 
 const URL =require('url');
 
@@ -20,13 +21,16 @@ export interface CallbackInQuery{
 
 export class FbOauth{
     public stateMap:{
-        [state:string]:{firebean:Partial<FireBean.Data>}
+        [state:string]:{
+            firebean:Partial<FireBean.Data>;
+            referer :string;
+        }
     }={};
     constructor(public config:OAuthOption){
         config.redirect_uri =config.redirect_uri||`${apiUrl()}/oauth/callback/${config.id}`;
     };
 
-    getCode(redirect:(url:string)=>void ,query:any={}){
+    getCode(redirect:(url:string)=>void ,req:Request){
         const getCodeUrl ='https://www.facebook.com/v2.12/dialog/oauth';
         const state =getRandomChar(16);
         const queryData:RedirectQuery ={
@@ -36,8 +40,9 @@ export class FbOauth{
             state :state,
         };
         this.stateMap[state] ={
-            firebean :query.firebean
-                ?JSON.parse(query.firebean)
+            referer :req.headers.referer as string,
+            firebean :req.query.firebean
+                ?JSON.parse(req.query.firebean)
                 :{}
             ,
         };

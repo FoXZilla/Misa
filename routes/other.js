@@ -42,8 +42,6 @@ exports.getBlogInfo = async function () {
         name: raw.name,
         version: raw.version,
         ...new form_dictator_1.default(raw.meta).pick([
-            'api_url',
-            'front_url',
             'publish_date',
             'description',
             'language',
@@ -68,5 +66,7 @@ exports.getBlogInfo = async function () {
             ...raw.meta.author,
             ...raw.meta.author.avatar ? { avatar: runtime_1.path2url(raw.meta.author.avatar) } : {},
         },
+        api_url: runtime_1.apiUrl(),
+        front_url: runtime_1.frontUrl(),
     };
 };

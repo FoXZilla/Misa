@@ -64,10 +64,14 @@ export const sendMail =function(){
             });
         }
     }(MailConfig);
-    const ready =new Promise(resolve=>transporter.verify(function(error, success) {
-        if (error) throw error;
-        console.log('Server is ready to take our mail.');
-        resolve();
+    const ready =new Promise((resolve,reject)=>transporter.verify(function(error ,success) {
+        if (error){
+            console.error(error);
+            reject(error);
+        }else{
+            console.log('Server is ready to take our mail.');
+            resolve();
+        };
     }));
     return async function({to,from=MailConfig.from,title,content}:{
         to:string;
@@ -97,10 +101,10 @@ export const sendMail =function(){
 }();
 
 export function frontUrl():string{
-    return config.meta['front_url'];
+    return process.env.FIREFRONT ||config.meta['front_url'];
 };
 export function apiUrl():string{
-    return config.meta['api_url'];
+    return process.env.FIREAPI ||config.meta['api_url'];
 };
 export function tokenAgeMs():number{
     return (config.meta['token_age_s']||60*60*24*7)*1000;

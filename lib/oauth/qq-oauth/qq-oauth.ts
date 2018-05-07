@@ -1,19 +1,23 @@
 import Fetch from "node-fetch";
 import {FireBean ,OAuthOption} from "@foxzilla/fireblog";
 import {apiUrl} from "../../runtime";
+import {Request} from "express-serve-static-core";
 
 const URL =require('url');
 
 
 export default class QQOAuth{
     public stateMap:{
-        [state:string]:{firebean:Partial<FireBean.Data>}
+        [state:string]:{
+            firebean:Partial<FireBean.Data>;
+            referer :string;
+        }
     }={};
     constructor(public config:OAuthOption){
         config.redirect_uri =config.redirect_uri||`${apiUrl()}/oauth/callback/${config.id}`;
     };
 
-    getCode(redirect:(url:string)=>void ,query:any={}){
+    getCode(redirect:(url:string)=>void ,req:Request){
         const getCodeUrl ='https://graph.qq.com/oauth2.0/authorize';
         const state =Math.random().toString().split('.')[1];
         const queryData ={
@@ -24,8 +28,9 @@ export default class QQOAuth{
             scope:'get_user_info',
         };
         this.stateMap[state] ={
-            firebean :query.firebean
-                ?JSON.parse(query.firebean)
+            referer :req.headers.referer as string,
+            firebean :req.query.firebean
+                ?JSON.parse(req.query.firebean)
                 :{}
             ,
         };
