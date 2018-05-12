@@ -136,7 +136,10 @@ function downloadAttachment(attachments) {
         }
         ;
         let path = Path.join(importPath, pea_script_1.getRandomChar(5).toLowerCase(), new URL.URL(url).pathname, '../');
-        Download(encodeURI(url), path, { proxy: process.env.http_proxy }).then(function () {
+        Download(encodeURI(url), path, {
+            proxy: process.env.http_proxy,
+            filename: url.split('/').pop(),
+        }).then(function () {
             map[url] = path.replace(path_reader_1.dataPath(), '.') + '/' + new URL.URL(url).pathname.split('/').pop();
             console.log('Downloaded', url);
             doDownload(resolve);

@@ -7,7 +7,7 @@ export const RootPath =Path.join(__dirname ,'../');
 
 var _dataPath =Path.join(RootPath,'data');
 export function setDataPath(newValue:string){
-    _dataPath =newValue;
+    _dataPath =newValue.replace(/\/$/,'');
 }
 export function dataPath():string{
     return _dataPath;

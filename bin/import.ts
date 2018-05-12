@@ -187,7 +187,14 @@ function downloadAttachment(attachments :string[]):Promise<string>{
             return;
         };
         let path =Path.join(importPath ,getRandomChar(5).toLowerCase(), new URL.URL(url).pathname, '../');
-        Download(encodeURI(url),path,{proxy:process.env.http_proxy}).then(function(){
+        Download(
+            encodeURI(url)
+            ,path
+            ,{
+                proxy:process.env.http_proxy,
+                filename : url.split('/').pop(),
+            }
+        ).then(function(){
             map[url!]=path.replace(dataPath(),'.')+'/'+new URL.URL(url).pathname.split('/').pop();
             console.log('Downloaded',url);
             doDownload(resolve);
